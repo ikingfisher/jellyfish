@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 )
 
 func main() {
@@ -15,13 +16,23 @@ func main() {
 	defer conn.Close()
 
 	fmt.Println("connecting sucess.", conn.RemoteAddr().String())
+	heartBeat(conn)
+}
 
+func heartBeat(conn net.Conn) {
 	done := make(chan string)
-	go handleWrite(conn, done)
-	go handleRead(conn, done)
+	ticker := time.NewTicker(3 * time.Second)
 
-	fmt.Println(<-done)
-	fmt.Println(<-done)
+	for {
+		select {
+			case t := <- ticker.C:
+			{
+				fmt.Println(t, ", heart beat!")
+				go handleWrite(conn, done)
+				go handleRead(conn, done)
+			}
+		}
+	}
 }
 
 func handleWrite(conn net.Conn, done chan string) {

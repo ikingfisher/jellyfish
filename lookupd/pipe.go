@@ -19,7 +19,7 @@ func tcpPipe(conn *net.TCPConn) {
 		}
 
 		fmt.Println(string(message))
-		msg := time.Now().String() + ", receive message: " +message+ "\n"
+		msg := time.Now().String() + ", server: ni hao!\n"
 		b := []byte(msg)
 		conn.Write(b)
 	}
