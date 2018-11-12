@@ -27,7 +27,7 @@ func heartBeat(conn net.Conn) {
 		select {
 			case t := <- ticker.C:
 			{
-				fmt.Println(t, ", heart beat!")
+				fmt.Println(t, " client heart beat.")
 				go handleWrite(conn, done)
 				go handleRead(conn, done)
 			}

@@ -51,11 +51,14 @@ func (p *program) Start() error {
 		return err
 	}
 
-	err = p.Accept()
-	if err != nil {
-		fmt.Println("run net accept failed!", err.Error())
-		return err
-	}
+	// err = p.Accept()
+	// if err != nil {
+	// 	fmt.Println("run net accept failed!", err.Error())
+	// 	return err
+	// }
+
+	go p.Accept()
+	go p.HeartBeat()
 
 	fmt.Println("program start...")
 	return nil
@@ -79,18 +82,6 @@ func (p * program) Accept() error {
 		fmt.Println("New client connected : " + tcpConn.RemoteAddr().String())
 		p.clients = append(p.clients, tcpConn)
 		go p.IOLoop(tcpConn)
-
-		go func() {
-			fmt.Println("set server hartbit.")
-			select {
-			case <- time.After(5 * time.Second):
-				{
-					for _, client := range p.clients {
-						go p.PushMsg(client)
-					}
-				}
-			}
-		}()
 	}
 	return nil
 }
@@ -107,9 +98,27 @@ func (p * program) IOLoop(conn *net.TCPConn) error {
 		}
 
 		fmt.Println(string(message))
+
 		msg := time.Now().String() + ", server: ni hao!\n"
 		b := []byte(msg)
 		conn.Write(b)
+	}
+	return nil
+}
+
+func (p * program) HeartBeat() error {
+	fmt.Println("start server heart beat.")
+	ticker := time.NewTicker(3 * time.Second)
+	for {
+		select {
+		case t := <- ticker.C:
+			{
+				fmt.Println(t, " tick server heart beat.")
+				for _, client := range p.clients {
+					p.PushMsg(client)
+				}
+			}
+		}
 	}
 	return nil
 }
