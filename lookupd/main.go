@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"github.com/judwhite/go-svc/svc"
 	"time"
+	"bufio"
 )
 
 type program struct {
@@ -50,27 +51,10 @@ func (p *program) Start() error {
 		return err
 	}
 
-	for {
-		tcpConn, err := p.tcpListener.AcceptTCP()
-		if err != nil {
-			continue
-		}
-
-		fmt.Println("New client connected : " + tcpConn.RemoteAddr().String())
-		p.clients = append(p.clients, tcpConn)
-		go tcpPipe(tcpConn)
-
-		go func() {
-			fmt.Println("set server hartbit.")
-			select {
-			case <- time.After(5 * time.Second):
-				{
-					for _, client := range p.clients {
-						go pushMsg(client)
-					}
-				}
-			}
-		}()
+	err = p.Accept()
+	if err != nil {
+		fmt.Println("run net accept failed!", err.Error())
+		return err
 	}
 
 	fmt.Println("program start...")
@@ -83,4 +67,57 @@ func (p *program) Stop() error {
 		client.Close()
 	}
 	return nil
+}
+
+func (p * program) Accept() error {
+	for {
+		tcpConn, err := p.tcpListener.AcceptTCP()
+		if err != nil {
+			continue
+		}
+
+		fmt.Println("New client connected : " + tcpConn.RemoteAddr().String())
+		p.clients = append(p.clients, tcpConn)
+		go p.IOLoop(tcpConn)
+
+		go func() {
+			fmt.Println("set server hartbit.")
+			select {
+			case <- time.After(5 * time.Second):
+				{
+					for _, client := range p.clients {
+						go p.PushMsg(client)
+					}
+				}
+			}
+		}()
+	}
+	return nil
+}
+
+func (p * program) IOLoop(conn *net.TCPConn) error {
+	// ipStr := conn.RemoteAddr().String()
+	reader := bufio.NewReader(conn)
+
+	for {
+		message, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("read from client failed! %s", err.Error())
+			return err
+		}
+
+		fmt.Println(string(message))
+		msg := time.Now().String() + ", server: ni hao!\n"
+		b := []byte(msg)
+		conn.Write(b)
+	}
+	return nil
+}
+
+func (p * program) PushMsg(conn *net.TCPConn) {
+	ipStr := conn.RemoteAddr().String()
+	fmt.Println("remote client ip : " + ipStr)
+	msg := time.Now().String() + ", push hart bit!\n"
+	b := []byte(msg)
+	conn.Write(b)
 }
