@@ -82,6 +82,7 @@ func (p * Program) Accept() error {
 		clientID := atomic.AddInt64(&p.clientIDSequence, 1)
 		logger.Debug("New client[%d] connected : %s", clientID, tcpConn.RemoteAddr().String())
 		client := &Client{
+			ID: clientID,
 			Conn: tcpConn,
 		}
 		p.clients[clientID] = client
@@ -91,7 +92,6 @@ func (p * Program) Accept() error {
 }
 
 func (p * Program) IOLoop(client *Client) error {
-	// ipStr := conn.RemoteAddr().String()
 	reader := bufio.NewReader(client.Conn)
 
 	for {
@@ -122,10 +122,10 @@ func (p * Program) HeartBeat() error {
 					err := p.PushMsg(client)
 					if err != nil {
 						timestamp := time.Now().Unix()
-						if client.HeartbeatTime - timestamp > 10 {
+						if timestamp - client.HeartbeatTime > 10 {
 							client.Conn.Close()
 							delete(p.clients, client.ID)
-							logger.Debug("client[%d] close.", client.ID)
+							logger.Debug("client[%d] close. clients count: %d", client.ID, len(p.clients))
 						}
 					}
 				}
@@ -137,7 +137,7 @@ func (p * Program) HeartBeat() error {
 
 func (p * Program) PushMsg(client *Client) error {
 	ipStr := client.Conn.RemoteAddr().String()
-	logger.Debug("remote client ip : " + ipStr)
+	logger.Debug("client[%d] push heart beat, remote client ip: %s, last time: %d", client.ID, ipStr, client.HeartbeatTime)
 	msg := time.Now().String() + ", push heart beat.\n"
 	b := []byte(msg)
 	_, err := client.Conn.Write(b)
