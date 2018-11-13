@@ -1,0 +1,7 @@
+########################################
+#	Common Makefile for Include
+########################################
+patterns = "/rpclookup|/outerlib"
+PROJ_ROOT = $(shell pwd | awk -F$(patterns) '{print $$1}')
+
+GOPATH := $(PROJ_ROOT)/rpclookup:$(GOPATH)

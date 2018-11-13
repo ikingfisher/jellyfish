@@ -1,4 +1,4 @@
-FILTER_OUT = $(wildcard Makefile*) inc lib
+FILTER_OUT = $(wildcard Makefile*) inc lib makefile
 
 ifndef SUBDIRS
 	SUBDIRS = $(filter-out $(FILTER_OUT), $(wildcard *))

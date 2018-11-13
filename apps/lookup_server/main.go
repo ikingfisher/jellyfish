@@ -6,8 +6,6 @@ import (
 	"github.com/judwhite/go-svc/svc"
 )
 
-var logger Logger
-
 func main() {
 	prg := &Program{}
 	if err := svc.Run(prg, syscall.SIGINT, syscall.SIGTERM); err != nil {

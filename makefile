@@ -1,4 +1,4 @@
-FILTER_OUT = $(wildcard makefile*) README.md inc lib
+FILTER_OUT = $(wildcard makefile*) README.md make.include src pkg
 
 ifndef SUBDIRS
 	SUBDIRS = $(filter-out $(FILTER_OUT), $(wildcard *))
@@ -9,6 +9,7 @@ endif
 all: $(SUBDIRS)
 
 clean: $(SUBDIRS)
+	-rm pkg -r
 
 $(SUBDIRS):
 	-$(MAKE) $(MAKECMDGOALS) -C $@
