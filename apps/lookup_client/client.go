@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"time"
+	"core/util"
 )
 
 func main() {
@@ -36,7 +37,12 @@ func HeartBeat(conn net.Conn) {
 }
 
 func handleWrite(conn net.Conn, done chan string) {
-	_, err := conn.Write([]byte("client: hello.\n"))
+	body := "hello"
+	buf := []byte("H")
+	bodySize := util.Int64ToBytes(int64(len(body)))
+	buf = append(buf, bodySize...)
+	buf = append(buf, body...)
+	_, err := conn.Write(buf)
 	if err != nil {
 		fmt.Println("Error to send message. ", err.Error())
 		return

@@ -2,9 +2,8 @@ package lookupd
 
 import (
 	"net"
-	"bufio"
 )
 
 type Handler interface {
-	HandleMessage(conn net.Conn, reader *bufio.Reader) error
+	HandleMessage(conn net.Conn, reqBuf []byte) error
 }
