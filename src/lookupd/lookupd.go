@@ -66,9 +66,13 @@ func (this *Lookupd) Main() {
 
 func (this * Lookupd) lookupLoop() error {
 	for {
+		this.tcpListener.SetDeadline(time.Now().Add(1e9))
 		tcpConn, err := this.tcpListener.AcceptTCP()
 		if err != nil {
-			continue
+			if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
+				continue
+			}
+			return err
 		}
 
 		clientID := atomic.AddInt64(&this.clientIDSequence, 1)
@@ -79,10 +83,10 @@ func (this * Lookupd) lookupLoop() error {
 			continue
 		}
 		this.clients[clientID] = client
-		go this.IOLoop(client)
+		this.waitGroup.Wrap(func() { this.IOLoop(client) })
 
 		for _, client := range this.clients {
-			this.logger.Debug("client pool id[%d] ip: ", client.ID, client.Conn.RemoteAddr().String())
+			this.logger.Debug("client pool id[%d] ip: %s", client.ID, client.Conn.RemoteAddr().String())
 		}
 	}
 	return nil
@@ -90,11 +94,23 @@ func (this * Lookupd) lookupLoop() error {
 
 func (this * Lookupd) IOLoop(client *client.Client) error {
 	for {
+		select {
+		case <- client.ExitChan:
+			this.CloseClient(client)
+			return nil
+		default:
+			//do nothing
+		}
+	
 		buf := make([]byte, 9)
 		n, err := io.ReadFull(client.Conn, buf)
 		if err != nil || n != len(buf) {
 			this.logger.Error("conn receive header failed! %s", err.Error())
-			break
+			if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
+				continue
+			}
+			client.ExitChan <- 1	//occur error! disconnect client.
+			continue
 		}
 
 		protocolMagic := string(buf[:1])

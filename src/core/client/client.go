@@ -13,6 +13,7 @@ type Client struct {
 	ID int64
 	net.Conn
 	HeartbeatTime int64
+	ExitChan chan int
 }
 
 func NewClient(logger *lg.Logger, id int64, conn net.Conn) (*Client, error){
@@ -20,6 +21,7 @@ func NewClient(logger *lg.Logger, id int64, conn net.Conn) (*Client, error){
 		logger: logger,
 		ID: id,
 		Conn: conn,
+		ExitChan: make(chan int),
 	}
 	return c, nil
 }
@@ -42,5 +44,6 @@ func (this * Client) PushHeartBeat() error {
 
 func (this *Client) Exit() error {
 	this.Conn.Close()
+	close(this.ExitChan)
 	return nil
 }

@@ -23,6 +23,7 @@ func main() {
 func HeartBeat(conn net.Conn) {
 	done := make(chan string)
 	ticker := time.NewTicker(3 * time.Second)
+	defer ticker.Stop()
 
 	for {
 		select {

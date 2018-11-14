@@ -52,26 +52,26 @@ func (this *Logger) Info(format string, v ...interface{}) {
 	if defaultLogLevel > LogLevelInfo {
 		return
 	}
-	log.Output(2, string("[INFO] ")+fmt.Sprintf(format, v...))
+	log.Output(2, string("\x1B[34m[INFO]\x1B[0m ")+fmt.Sprintf(format, v...))
 }
 
 func (this *Logger) Warning(format string, v ...interface{}) {
 	if defaultLogLevel > LogLevelWarning {
 		return
 	}
-	log.Output(2, string("[WARNING] ")+fmt.Sprintf(format, v...))
+	log.Output(2, string("\x1B[33m[WARNING]\x1B[0m ")+fmt.Sprintf(format, v...))
 }
 
 func (this *Logger) Error(format string, v ...interface{}) {
 	if defaultLogLevel > LogLevelError {
 		return
 	}
-	log.Output(2, string("[ERROR] ")+fmt.Sprintf(format, v...))
+	log.Output(2, string("\x1B[31m[ERROR]\x1B[0m ")+fmt.Sprintf(format, v...))
 }
 
 func (this *Logger) Fatal(format string, v ...interface{}) {
 	if defaultLogLevel > LogLevelFatal {
 		return
 	}
-	log.Output(2, string("[FATAL] ")+fmt.Sprintf(format, v...))
+	log.Output(2, string("\x1B[36m[FATAL]\x1B[0m ")+fmt.Sprintf(format, v...))
 }
