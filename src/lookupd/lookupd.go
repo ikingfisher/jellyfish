@@ -1,12 +1,14 @@
 package lookupd
 
 import (
+	"os"
 	"net"
 	"time"
 	"bufio"
 	"sync/atomic"
 	"core/client"
 	"core/lg"
+	"core/util"
 )
 
 type Lookupd struct {
@@ -16,6 +18,7 @@ type Lookupd struct {
 	clientIDSequence int64
 	listenPort string
 	handler Handler
+	waitGroup util.WaitGroupWrapper
 }
 
 func NewLookupd(port string, logger *lg.Logger, handler Handler) (*Lookupd, error) {
@@ -45,7 +48,19 @@ func (this * Lookupd) Init() error {
 	return nil
 }
 
-func (this * Lookupd) Accept() error {
+func (this *Lookupd) Main() {
+	this.waitGroup.Wrap(func() {
+		err := this.lookupLoop()
+		if err != nil {
+			this.logger.Error("run net accept failed!", err.Error())
+			this.Exit()
+			os.Exit(1)
+		}
+	})
+	return
+}
+
+func (this * Lookupd) lookupLoop() error {
 	for {
 		tcpConn, err := this.tcpListener.AcceptTCP()
 		if err != nil {

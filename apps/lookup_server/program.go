@@ -40,22 +40,17 @@ func (this *Program) Init(env svc.Environment) error {
 		return err
 	}
 
-	this.lookupd.Init()
+	err = this.lookupd.Init()
+	if err != nil {
+		logger.Error("init lookup failed! %s", err.Error())
+		return err
+	}
 	return nil
 }
 
 func (this *Program) Start() error {
-	var err error
-
-	go func() {
-		err = this.lookupd.Accept()
-		if err != nil {
-			logger.Error("run net accept failed!", err.Error())
-			os.Exit(1)
-		}
-	}()
-
 	logger.Debug("Program start...")
+	this.lookupd.Main()
 	return nil
 }
 
