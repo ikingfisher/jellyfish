@@ -16,10 +16,10 @@ func main() {
 	defer conn.Close()
 
 	fmt.Println("connecting sucess.", conn.RemoteAddr().String())
-	heartBeat(conn)
+	HeartBeat(conn)
 }
 
-func heartBeat(conn net.Conn) {
+func HeartBeat(conn net.Conn) {
 	done := make(chan string)
 	ticker := time.NewTicker(3 * time.Second)
 

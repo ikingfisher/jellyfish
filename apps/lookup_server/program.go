@@ -11,8 +11,9 @@ import (
 	"lookupd"
 )
 
+var logger *lg.Logger
+
 type Program struct {
-	logger *lg.Logger
 	lookupd *lookupd.Lookupd
 }
 
@@ -24,15 +25,18 @@ func (this *Program) Init(env svc.Environment) error {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	flag.Parse()
 	
-	this.logger = &lg.Logger{}
-	this.logger.SetFlags(log.Ldate | log.Lshortfile)
-	this.logger.SetOutput(os.Stdout)
+	logger = &lg.Logger{}
+	logger.SetFlags(log.Ldate | log.Lshortfile)
+	logger.SetOutput(os.Stdout)
 
 	var err error
 	port := "16688"
-	this.lookupd, err = lookupd.NewLookupd(port, this.logger)
+	handler := MsgHandler{
+		logger: logger,
+	}
+	this.lookupd, err = lookupd.NewLookupd(port, logger, handler)
 	if err != nil {
-		this.logger.Error("new lookupd failed! %s", err.Error())
+		logger.Error("new lookupd failed! %s", err.Error())
 		return err
 	}
 
@@ -46,14 +50,12 @@ func (this *Program) Start() error {
 	go func() {
 		err = this.lookupd.Accept()
 		if err != nil {
-			this.logger.Error("run net accept failed!", err.Error())
+			logger.Error("run net accept failed!", err.Error())
 			os.Exit(1)
 		}
 	}()
 
-	go this.lookupd.HeartBeat()
-
-	this.logger.Debug("Program start...")
+	logger.Debug("Program start...")
 	return nil
 }
 
