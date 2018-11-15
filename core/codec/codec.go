@@ -27,9 +27,8 @@ func ReqEncode(req Request) ([]byte, error) {
 }
 
 func RspDecode(body []byte) (*Response, error) {
-	var buff bytes.Buffer
-	buff.Writer(body)
-	dec := gob.NewDecoder(&buff)
+	buff := bytes.NewBuffer(body)
+	dec := gob.NewDecoder(buff)
 	var rsp Response
     err := dec.Decode(&rsp)
     if err != nil {

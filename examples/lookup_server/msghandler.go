@@ -20,7 +20,7 @@ func (this MsgHandler) HandleMessage(conn net.Conn, reqBuf []byte) error {
 		return err
 	}
 
-	this.logger.Debug("cmd:%s, body:%s", rep.Cmd, req)
+	this.logger.Debug("cmd:%s, body:%s", req.Cmd, string(req.Body))
 
 	msg := "server: rsp to client.\n"
 	b := []byte(msg)
