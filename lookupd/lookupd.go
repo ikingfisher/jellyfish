@@ -1,14 +1,14 @@
 package lookupd
 
 import (
+	"github.com/wondywang/rpclookup/core/client"
+	"github.com/wondywang/rpclookup/core/lg"
+	"github.com/wondywang/rpclookup/core/util"
 	"os"
 	"net"
 	"io"
 	"time"
 	"sync/atomic"
-	"core/client"
-	"core/lg"
-	"core/util"
 )
 
 type Lookupd struct {

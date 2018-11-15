@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/wondywang/rpclookup/core/lg"
 	"net"
-	"core/lg"
 )
 
 type MsgHandler struct {
