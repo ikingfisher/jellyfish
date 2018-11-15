@@ -1,4 +1,4 @@
-package lookupd
+package codec
 
 import (
 	"bytes"
@@ -15,24 +15,24 @@ type Response struct {
 	Body []byte
 }
 
-func (this * Lookupd) ReqEncode(req Request) ([]byte, error) {
+func ReqEncode(req Request) ([]byte, error) {
 	var buff bytes.Buffer
 	enc := gob.NewEncoder(&buff)
 	err := enc.Encode(req)
     if err != nil {
-		this.logger.Error("encode error: %s", err.Error())
+		// this.logger.Error("encode error: %s", err.Error())
 		return nil, err
 	}
 	return buff.Bytes(), nil
 }
 
-func (this * Lookupd) RspDecode() (*Response, error) {
-	var buff bytes.Buffer
-	dec := gob.NewDecoder(&buff)
+func RspDecode(body []byte) (*Response, error) {
+	buff := bytes.NewBuffer(body)
+	dec := gob.NewDecoder(buff)
 	var rsp Response
     err := dec.Decode(&rsp)
     if err != nil {
-		this.logger.Error("decode error: %s", err.Error())
+		// this.logger.Error("decode error: %s", err.Error())
 		return nil, err
 	}
 	return &rsp, nil
