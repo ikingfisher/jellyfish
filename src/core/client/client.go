@@ -21,7 +21,7 @@ func NewClient(logger *lg.Logger, id int64, conn net.Conn) (*Client, error){
 		logger: logger,
 		ID: id,
 		Conn: conn,
-		ExitChan: make(chan int),
+		ExitChan: make(chan int, 1),
 	}
 	return c, nil
 }

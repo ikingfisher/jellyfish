@@ -96,39 +96,43 @@ func (this * Lookupd) IOLoop(client *client.Client) error {
 	for {
 		select {
 		case <- client.ExitChan:
-			this.logger.Warning("ExitChan tick. close client[%d]", client.ID)
+			this.logger.Warning("ExitChan effect. close client[%d]", client.ID)
 			this.CloseClient(client)
 			return nil
 		default:
+			this.logger.Trace("default. begin receive msg.")
 			//do nothing
 		}
 	
-		buf := make([]byte, 9)
+		buf := make([]byte, 17)
 		n, err := io.ReadFull(client.Conn, buf)
 		if err != nil || n != len(buf) {
 			this.logger.Error("conn receive header failed! %s", err.Error())
 			if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
 				continue
 			}
+			this.logger.Warning("ExitChan set. client[%d]", client.ID)
 			client.ExitChan <- 1	//occur error! disconnect client.
 			continue
 		}
 
 		protocolMagic := string(buf[:1])
-		this.logger.Debug("protocolMagic:%s, buf:%v", protocolMagic, buf)
-		bodySize := util.BytesToInt64(buf[1:])
+		this.logger.Trace("protocolMagic:%s", protocolMagic)
+		bodySize := util.BytesToInt64(buf[1:9])
+		seq := util.BytesToInt64(buf[9:])
+		this.logger.Debug("seq:%d, buf:%v", seq, buf)
 
 		body := make([]byte, bodySize)
 		n, err = io.ReadFull(client.Conn, body)
 		if err != nil {
-			this.logger.Error("conn receive body failed! %s", err.Error())
+			this.logger.Error("seq:%d, conn receive body failed! %s", seq, err.Error())
 			continue
 		}
 
 		switch protocolMagic {
 		case "H":
 			//todo heart beat logic
-			err = this.HeartBeat(client, body)
+			err = this.HeartBeat(client, seq, body)
 		case "D":
 			//todo reveive data logic
 			err := this.handler.HandleMessage(client.Conn, body)
@@ -144,9 +148,9 @@ func (this * Lookupd) IOLoop(client *client.Client) error {
 	return nil
 }
 
-func (this *Lookupd) HeartBeat(client *client.Client, body []byte) error {
+func (this *Lookupd) HeartBeat(client *client.Client, seq int64, body []byte) error {
 	ipStr := client.Conn.RemoteAddr().String()
-	this.logger.Debug("%s say: %s", ipStr, string(body))
+	this.logger.Debug("%d, %s say: %s", seq, ipStr, string(body))
 
 	err := client.PushHeartBeat()
 	if err != nil {
@@ -166,8 +170,8 @@ func (this *Lookupd) Ticker() {
 				timestamp := time.Now().Unix()
 				for _, client := range this.clients {
 					if timestamp - client.HeartbeatTime > 3 * this.heartbeatInterval {
-						this.logger.Warning("ExitChan tick. close client[%d]", client.ID)
-						this.CloseClient(client)
+						this.logger.Warning("ticker ExitChan set. close client[%d]", client.ID)
+						client.ExitChan <- 1	//occur error! disconnect client.
 					}
 				}
 			}

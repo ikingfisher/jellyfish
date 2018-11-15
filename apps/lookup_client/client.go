@@ -13,7 +13,7 @@ var logger *lg.Logger
 
 func main() {
 	logger = &lg.Logger{}
-	logger.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	logger.SetFlags(log.Ltime | log.Lshortfile)
 	logger.SetOutput(os.Stdout)
 
 	conn, err := net.Dial("tcp", "10.100.71.218:16688")
@@ -48,7 +48,12 @@ func handleWrite(conn net.Conn, done chan string) {
 	body := "hello"
 	buf := []byte("H")
 	bodySize := util.Int64ToBytes(int64(len(body)))
+	nanoTime := time.Now().UnixNano()
+	seq := util.Int64ToBytes(nanoTime)
+	logger.Debug("seq: %d", nanoTime)
+
 	buf = append(buf, bodySize...)
+	buf = append(buf, seq...)
 	buf = append(buf, body...)
 	_, err := conn.Write(buf)
 	if err != nil {

@@ -26,8 +26,9 @@ func (this *Program) Init(env svc.Environment) error {
 	flag.Parse()
 	
 	logger = &lg.Logger{}
-	logger.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	logger.SetFlags(log.Ltime | log.Lshortfile)
 	logger.SetOutput(os.Stdout)
+	// logger.SetLevel(lg.LogLevelDebug)
 
 	var err error
 	port := "16688"
