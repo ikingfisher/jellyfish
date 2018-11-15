@@ -1,14 +1,14 @@
 package main
 
 import (
+	"github.com/wondywang/rpclookup/core/lg"
+	"github.com/wondywang/rpclookup/lookupd"
 	"os"
 	"flag"
 	"runtime"
 	"path/filepath"
 	"log"
 	"github.com/judwhite/go-svc/svc"
-	"core/lg"
-	"lookupd"
 )
 
 var logger *lg.Logger

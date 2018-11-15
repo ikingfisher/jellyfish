@@ -1,13 +1,14 @@
 package main
 
 import (
+	"github.com/wondywang/rpclookup/core/lg"
+	"github.com/wondywang/rpclookup/core/util"
 	"io"
 	"net"
 	"os"
 	"log"
 	"time"
-	"core/util"
-	"core/lg"
+
 )
 
 var logger *lg.Logger

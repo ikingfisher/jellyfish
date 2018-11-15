@@ -1,9 +1,9 @@
 package client
 
 import (
+	"github.com/wondywang/rpclookup/core/lg"
 	"net"
 	"time"
-	"core/lg"
 	// "context"
 )
 
