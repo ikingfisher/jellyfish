@@ -17,7 +17,7 @@ func main() {
 	logger.SetFlags(log.Ltime | log.Lshortfile)
 	logger.SetOutput(os.Stdout)
 
-	conn, err := net.Dial("tcp", "10.100.71.218:16688")
+	conn, err := net.Dial("tcp", "127.0.0.1:16688")
 	if err != nil {
 		logger.Fatal("connecting failed! %s", err.Error())
 		os.Exit(1)
