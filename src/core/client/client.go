@@ -43,6 +43,7 @@ func (this * Client) PushHeartBeat() error {
 }
 
 func (this *Client) Exit() error {
+	this.logger.Warning("client id:%d HeartbeatTime:%d exit!", this.ID, this.HeartbeatTime)
 	this.Conn.Close()
 	close(this.ExitChan)
 	return nil

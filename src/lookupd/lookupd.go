@@ -96,6 +96,7 @@ func (this * Lookupd) IOLoop(client *client.Client) error {
 	for {
 		select {
 		case <- client.ExitChan:
+			this.logger.Warning("ExitChan tick. close client[%d]", client.ID)
 			this.CloseClient(client)
 			return nil
 		default:
@@ -165,6 +166,7 @@ func (this *Lookupd) Ticker() {
 				timestamp := time.Now().Unix()
 				for _, client := range this.clients {
 					if timestamp - client.HeartbeatTime > 3 * this.heartbeatInterval {
+						this.logger.Warning("ExitChan tick. close client[%d]", client.ID)
 						this.CloseClient(client)
 					}
 				}
@@ -181,7 +183,7 @@ func (this *Lookupd) SetLogger(l *lg.Logger) {
 func (this *Lookupd) CloseClient(client *client.Client) error {
 	client.Exit()
 	delete(this.clients, client.ID)
-	this.logger.Debug("client[%d] close. clients num:%d", client.ID, len(this.clients))
+	this.logger.Warning("client[%d] close. clients num:%d", client.ID, len(this.clients))
 	return nil
 }
 
