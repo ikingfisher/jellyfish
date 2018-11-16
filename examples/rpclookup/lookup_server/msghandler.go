@@ -2,8 +2,10 @@ package main
 
 import (
 	"net"
+	"time"
 	"github.com/ikingfisher/jellyfish/core/lg"
 	"github.com/ikingfisher/jellyfish/core/codec"
+	"github.com/ikingfisher/jellyfish/core/util"
 )
 
 type MsgHandler struct {
@@ -14,16 +16,40 @@ func (this MsgHandler) HandleMessage(conn net.Conn, reqBuf []byte) error {
 	ipStr := conn.RemoteAddr().String()
 	this.logger.Debug("MsgHandler receive from %s", ipStr)
 
-	req, err := codec.RspDecode(reqBuf)
+	req, err := codec.ReqDecode(reqBuf)
 	if err != nil {
 		this.logger.Error("decode failed! %s", err.Error())
 		return err
 	}
-
 	this.logger.Debug("cmd:%s, body:%s", req.Cmd, string(req.Body))
 
-	msg := "server: rsp to client.\n"
-	b := []byte(msg)
-	conn.Write(b)
+	var rsp codec.Response
+	rsp.Cmd = req.Cmd
+	rsp.Body = []byte(string("server: rsp to client."))
+	body, err := codec.RspEncode(rsp)
+	if err != nil {
+		logger.Error("request encode failed! %s", err.Error())
+		return err
+	}
+	bodySize := util.Int64ToBytes(int64(len(body)))
+	nanoTime := time.Now().UnixNano()
+	seq := util.Int64ToBytes(nanoTime)
+	logger.Debug("seq: %d", nanoTime)
+
+	buf := []byte("D")
+	buf = append(buf, bodySize...)
+	buf = append(buf, seq...)
+	buf = append(buf, body...)
+
+	_, err = conn.Write(buf)
+	if err != nil {
+		if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
+			logger.Debug("write message timeout. %s", err.Error())
+			return err
+		}
+		logger.Error("Error to send message. %s", err.Error())
+		return err
+	}
+
 	return nil
 }

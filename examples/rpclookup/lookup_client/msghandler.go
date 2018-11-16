@@ -41,17 +41,34 @@ func HandleMsgWrite(conn net.Conn, done chan int) {
 	}
 }
 
-func HandleMsgRead(conn net.Conn, done chan int) {
-	buf := make([]byte, 1024)
-	len, err := conn.Read(buf)
-	if err != nil {
-		if err == io.EOF {
-			logger.Debug("read null message. %s", err.Error())
-			return
+func HandleMsgRead(conn net.Conn, done chan int) error {
+	buf := make([]byte, 17)
+	n, err := io.ReadFull(conn, buf)
+	if err != nil || n != len(buf) {
+		logger.Error("conn receive header failed! %s", err.Error())
+		if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
+			return err
 		}
-		done <- 1
-		logger.Error("Error to read message. %s", err.Error())
-		return
+		return err
 	}
-	logger.Debug(string(buf[:len-1]))
+	protocolMagic := string(buf[:1])
+	logger.Trace("protocolMagic:%s", protocolMagic)
+	bodySize := util.BytesToInt64(buf[1:9])
+	seq := util.BytesToInt64(buf[9:])
+	logger.Debug("seq:%d, buf:%v", seq, buf)
+	body := make([]byte, bodySize)
+	n, err = io.ReadFull(conn, body)
+	if err != nil {
+		logger.Error("seq:%d, conn receive body failed! %s", seq, err.Error())
+		return err
+	}
+
+	rsp, err := codec.RspDecode(body)
+	if err != nil {
+		logger.Error("decode failed! %s", err.Error())
+		return err
+	}
+
+	logger.Debug("cmd:%s, body:%s", rsp.Cmd, string(rsp.Body))
+	return nil
 }
