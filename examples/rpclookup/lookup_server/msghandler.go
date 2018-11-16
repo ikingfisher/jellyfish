@@ -2,8 +2,8 @@ package main
 
 import (
 	"net"
-	"github.com/wondywang/rpclookup/core/lg"
-	"github.com/wondywang/rpclookup/core/codec"
+	"github.com/ikingfisher/jellyfish/core/lg"
+	"github.com/ikingfisher/jellyfish/core/codec"
 )
 
 type MsgHandler struct {

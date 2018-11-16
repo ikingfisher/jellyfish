@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/wondywang/rpclookup/core/lg"
-	"github.com/wondywang/rpclookup/lookupd"
+	"github.com/ikingfisher/jellyfish/core/lg"
+	"github.com/ikingfisher/jellyfish/lookupd"
 	"os"
 	"flag"
 	"runtime"

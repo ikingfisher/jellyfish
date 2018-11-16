@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/wondywang/rpclookup/core/lg"
+	"github.com/ikingfisher/jellyfish/core/lg"
 	"net"
 	"time"
 	// "context"
