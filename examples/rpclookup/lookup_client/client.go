@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"github.com/wondywang/rpclookup/core/lg"
-	"github.com/wondywang/rpclookup/core/util"
+	"github.com/ikingfisher/jellyfish/core/lg"
+	"github.com/ikingfisher/jellyfish/core/util"
 	"net"
 	"os"
 	"log"

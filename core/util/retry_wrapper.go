@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/wondywang/rpclookup/core/lg"
+	"github.com/ikingfisher/jellyfish/core/lg"
 	"math/rand"
 	"time"
 )

@@ -1,6 +1,6 @@
-patterns = "/rpclookup|/outerlib"
+patterns = "/jellyfish|/outerlib"
 PROJ_ROOT = $(shell pwd | awk -F$(patterns) '{print $$1}')
-include $(PROJ_ROOT)/rpclookup/make.include
+include $(PROJ_ROOT)/jellyfish/make.include
 
 .PHONY: all clean
 
