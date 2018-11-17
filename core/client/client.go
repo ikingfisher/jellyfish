@@ -1,6 +1,7 @@
 package client
 
 import (
+	"github.com/ikingfisher/jellyfish/core/util"
 	"github.com/ikingfisher/jellyfish/core/lg"
 	"net"
 	"time"
@@ -30,14 +31,22 @@ func (this * Client) PushHeartBeat() error {
 	ipStr := this.Conn.RemoteAddr().String()
 	this.logger.Debug("client[%d] push heartbeat, remote ip: %s, last time: %d",
 		this.ID, ipStr, this.HeartbeatTime)
-	
-	msg := time.Now().String() + ", push heartbeat."
-	b := []byte(msg)
-	_, err := this.Conn.Write(b)
+
+	body := "hello"
+	buf := []byte("H")
+	bodySize := util.Int64ToBytes(int64(len(body)))
+	nanoTime := time.Now().UnixNano()
+	seq := util.Int64ToBytes(nanoTime)
+	this.logger.Debug("seq: %d", nanoTime)
+	buf = append(buf, bodySize...)
+	buf = append(buf, seq...)
+	buf = append(buf, body...)
+	_, err := this.Conn.Write(buf)
 	if err != nil {
 		this.logger.Error("push heart beat failed! ", err.Error())
 		return err
 	}
+
 	this.HeartbeatTime = time.Now().Unix()
 	return nil
 }

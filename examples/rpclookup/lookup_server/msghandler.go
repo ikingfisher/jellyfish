@@ -25,7 +25,7 @@ func (this MsgHandler) HandleMessage(conn net.Conn, reqBuf []byte) error {
 
 	var rsp codec.Response
 	rsp.Cmd = req.Cmd
-	rsp.Body = []byte(string("server: rsp to client."))
+	rsp.Body = []byte(string("server: rsp from server."))
 	body, err := codec.RspEncode(rsp)
 	if err != nil {
 		logger.Error("request encode failed! %s", err.Error())

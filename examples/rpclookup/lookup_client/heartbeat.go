@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io"
 	"net"
 	"time"
 	"github.com/ikingfisher/jellyfish/core/util"
@@ -30,17 +29,7 @@ func HeartBeatWrite(conn net.Conn, done chan int) {
 	}
 }
 
-func HeartBeatRead(conn net.Conn, done chan int) {
-	buf := make([]byte, 1024)
-	len, err := conn.Read(buf)
-	if err != nil {
-		if err == io.EOF {
-			logger.Debug("read null message. %s", err.Error())
-			return
-		}
-		done <- 1
-		logger.Error("Error to read message. %s", err.Error())
-		return
-	}
-	logger.Debug(string(buf[:len-1]))
+func HeartBeatRead(body []byte) error {
+	logger.Debug("heart beat, body:%s", string(body))
+	return nil
 }
