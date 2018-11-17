@@ -25,6 +25,7 @@ func main() {
 
 func HeartBeat() error{
 	errorOccur := make(chan int)
+	loopExit := make(chan int)
 	//retry 3 times at most, retry time gap start from 1 second
 	return util.Retry(3, 1 * time.Second, func() error {
 		conn, err := net.Dial("tcp", "127.0.0.1:16688")
@@ -34,6 +35,19 @@ func HeartBeat() error{
 		}
 		logger.Debug("connecting sucess. %s", conn.RemoteAddr().String())
 		defer conn.Close()
+
+		go func() {
+			for {
+				select {
+				case <- loopExit:
+					return
+				default:
+					//do nothing
+				}
+				HandleMessage(conn, loopExit)
+			}
+		}()
+		
 		ticker := time.NewTicker(3 * time.Second)
 		defer ticker.Stop()
 
@@ -45,13 +59,13 @@ func HeartBeat() error{
 				{
 					logger.Debug("client heart beat.")
 					go HeartBeatWrite(conn, errorOccur)
-					go HeartBeatRead(conn, errorOccur)
+					// go HeartBeatRead(conn, errorOccur)
 				}
 			case <- msgticker.C:
 				{
 					logger.Debug("client handle msg.")
 					go HandleMsgWrite(conn, errorOccur)
-					go HandleMsgRead(conn, errorOccur)
+					// go HandleMsgRead(conn, errorOccur)
 				}
 			case <- errorOccur:
 				logger.Warning("conn close. exit!")

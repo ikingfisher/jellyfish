@@ -8,6 +8,49 @@ import (
 	"github.com/ikingfisher/jellyfish/core/codec"
 )
 
+func HandleMessage(conn net.Conn, done chan int) error {
+	buf := make([]byte, 17)
+	n, err := io.ReadFull(conn, buf)
+	if err != nil || n != len(buf) {
+		logger.Error("conn receive header failed! %s", err.Error())
+		if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
+			done <- 1
+			return err
+		}
+		done <- 1
+		return err
+	}
+
+	protocolMagic := string(buf[:1])
+	logger.Trace("protocolMagic:%s", protocolMagic)
+	bodySize := util.BytesToInt64(buf[1:9])
+	seq := util.BytesToInt64(buf[9:])
+	logger.Debug("seq:%d, buf:%v", seq, buf)
+
+	body := make([]byte, bodySize)
+	n, err = io.ReadFull(conn, body)
+	if err != nil {
+		logger.Error("seq:%d, conn receive body failed! %s", seq, err.Error())
+		done <- 1
+		return err
+	}
+
+	switch protocolMagic {
+	case "H":
+		// err = this.HeartBeat(client, seq, body)
+	case "D":
+		// err := this.handler.HandleMessage(client.Conn, body)
+		// if err != nil {
+		// 	this.logger.Error("client[%d] handler error. %s", client.ID, err.Error())
+		// 	return err
+		// }
+	default:
+		logger.Error("unkown magic code:%s", protocolMagic)
+		return nil
+	}
+	return nil
+}
+
 func HandleMsgWrite(conn net.Conn, done chan int) {
 	// body := "hello"
 	buf := []byte("D")
