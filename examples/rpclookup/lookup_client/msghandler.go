@@ -37,13 +37,17 @@ func HandleMessage(conn net.Conn, done chan int) error {
 
 	switch protocolMagic {
 	case "H":
-		// err = this.HeartBeat(client, seq, body)
+		err = HeartBeatRead(body)
+		if err != nil {
+			logger.Error("heart beat error. %s", err.Error())
+			return err
+		}
 	case "D":
-		// err := this.handler.HandleMessage(client.Conn, body)
-		// if err != nil {
-		// 	this.logger.Error("client[%d] handler error. %s", client.ID, err.Error())
-		// 	return err
-		// }
+		err := HandleMsgRead(body)
+		if err != nil {
+			logger.Error("mgs handler error. %s", err.Error())
+			return err
+		}
 	default:
 		logger.Error("unkown magic code:%s", protocolMagic)
 		return nil
@@ -52,10 +56,9 @@ func HandleMessage(conn net.Conn, done chan int) error {
 }
 
 func HandleMsgWrite(conn net.Conn, done chan int) {
-	// body := "hello"
 	buf := []byte("D")
 	var req codec.Request
-	req.Cmd = "QueryList"
+	req.Cmd = "HandleMsg"
 	req.Body = append(req.Body, string("request from client")...)
 	body, err := codec.ReqEncode(req)
 	if err != nil {
@@ -84,28 +87,7 @@ func HandleMsgWrite(conn net.Conn, done chan int) {
 	}
 }
 
-func HandleMsgRead(conn net.Conn, done chan int) error {
-	buf := make([]byte, 17)
-	n, err := io.ReadFull(conn, buf)
-	if err != nil || n != len(buf) {
-		logger.Error("conn receive header failed! %s", err.Error())
-		if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
-			return err
-		}
-		return err
-	}
-	protocolMagic := string(buf[:1])
-	logger.Trace("protocolMagic:%s", protocolMagic)
-	bodySize := util.BytesToInt64(buf[1:9])
-	seq := util.BytesToInt64(buf[9:])
-	logger.Debug("seq:%d, buf:%v", seq, buf)
-	body := make([]byte, bodySize)
-	n, err = io.ReadFull(conn, body)
-	if err != nil {
-		logger.Error("seq:%d, conn receive body failed! %s", seq, err.Error())
-		return err
-	}
-
+func HandleMsgRead(body []byte) error {
 	rsp, err := codec.RspDecode(body)
 	if err != nil {
 		logger.Error("decode failed! %s", err.Error())

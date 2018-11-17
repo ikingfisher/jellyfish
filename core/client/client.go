@@ -31,14 +31,6 @@ func (this * Client) PushHeartBeat() error {
 	ipStr := this.Conn.RemoteAddr().String()
 	this.logger.Debug("client[%d] push heartbeat, remote ip: %s, last time: %d",
 		this.ID, ipStr, this.HeartbeatTime)
-	
-	// msg := time.Now().String() + ", push heartbeat."
-	// b := []byte(msg)
-	// _, err := this.Conn.Write(b)
-	// if err != nil {
-	// 	this.logger.Error("push heart beat failed! ", err.Error())
-	// 	return err
-	// }
 
 	body := "hello"
 	buf := []byte("H")

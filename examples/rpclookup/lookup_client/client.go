@@ -47,7 +47,7 @@ func HeartBeat() error{
 				HandleMessage(conn, loopExit)
 			}
 		}()
-		
+
 		ticker := time.NewTicker(3 * time.Second)
 		defer ticker.Stop()
 
@@ -59,13 +59,11 @@ func HeartBeat() error{
 				{
 					logger.Debug("client heart beat.")
 					go HeartBeatWrite(conn, errorOccur)
-					// go HeartBeatRead(conn, errorOccur)
 				}
 			case <- msgticker.C:
 				{
 					logger.Debug("client handle msg.")
 					go HandleMsgWrite(conn, errorOccur)
-					// go HandleMsgRead(conn, errorOccur)
 				}
 			case <- errorOccur:
 				logger.Warning("conn close. exit!")
@@ -73,24 +71,4 @@ func HeartBeat() error{
 			}
 		}
 	})
-}
-
-func ProcessMsg(conn net.Conn) {
-	done := make(chan int)
-	ticker := time.NewTicker(3 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <- ticker.C:
-		{
-			logger.Debug("client process msg.")
-			go HandleMsgWrite(conn, done)
-			go HandleMsgRead(conn, done)
-		}
-		case <- done:
-			logger.Warning("conn close. exit!")
-			return
-		}
-	}
 }
