@@ -4,6 +4,7 @@ import (
 	"github.com/ikingfisher/jellyfish/core/client"
 	"github.com/ikingfisher/jellyfish/core/lg"
 	"github.com/ikingfisher/jellyfish/core/util"
+	"github.com/ikingfisher/jellyfish/core/codec"
 	"os"
 	"net"
 	"io"
@@ -104,7 +105,7 @@ func (this * Lookupd) IOLoop(client *client.Client) error {
 			//do nothing
 		}
 	
-		buf := make([]byte, 17)
+		buf := make([]byte, codec.HeaderSize())
 		n, err := io.ReadFull(client.Conn, buf)
 		if err != nil || n != len(buf) {
 			this.logger.Error("conn receive header failed! %s", err.Error())
@@ -116,13 +117,20 @@ func (this * Lookupd) IOLoop(client *client.Client) error {
 			continue
 		}
 
-		protocolMagic := string(buf[:1])
+		var header codec.Header
+		err = codec.Decode(buf, &header)
+		if err != nil {
+			this.logger.Error("header decode failed! %s", err.Error())
+			continue
+		}
+		protocolMagic := string(header.T)
 		this.logger.Trace("protocolMagic:%s", protocolMagic)
-		bodySize := util.BytesToInt64(buf[1:9])
-		seq := util.BytesToInt64(buf[9:])
+		// bodySize := util.BytesToInt64(buf[1:9])
+		// seq := util.BytesToInt64(buf[9:])
+		seq := header.Seq
 		this.logger.Debug("seq:%d, buf:%v", seq, buf)
 
-		body := make([]byte, bodySize)
+		body := make([]byte, header.Size)
 		n, err = io.ReadFull(client.Conn, body)
 		if err != nil {
 			this.logger.Error("seq:%d, conn receive body failed! %s", seq, err.Error())

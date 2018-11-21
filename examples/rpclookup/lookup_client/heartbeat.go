@@ -3,21 +3,27 @@ package main
 import (
 	"net"
 	"time"
-	"github.com/ikingfisher/jellyfish/core/util"
+	"github.com/ikingfisher/jellyfish/core/codec"
 )
 
 func HeartBeatWrite(conn net.Conn, done chan int) {
 	body := "hello"
-	buf := []byte("H")
-	bodySize := util.Int64ToBytes(int64(len(body)))
-	nanoTime := time.Now().UnixNano()
-	seq := util.Int64ToBytes(nanoTime)
-	logger.Debug("seq: %d", nanoTime)
+	// buf := []byte("H")
+	// bodySize := util.Int64ToBytes(int64(len(body)))
+	seq := time.Now().UnixNano()
+	// seq := util.Int64ToBytes(nanoTime)
+	logger.Debug("seq: %d", seq)
 
-	buf = append(buf, bodySize...)
-	buf = append(buf, seq...)
-	buf = append(buf, body...)
-	_, err := conn.Write(buf)
+	// buf = append(buf, bodySize...)
+	// buf = append(buf, seq...)
+	// buf = append(buf, body...)
+	buf, err := codec.EncodeHeader(seq, body)
+	if err != nil {
+		logger.Error("header encode failed! %s", err.Error())
+		return
+	}
+
+	_, err = conn.Write(buf)
 	if err != nil {
 		if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
 			logger.Debug("write message timeout. %s", err.Error())
@@ -30,6 +36,12 @@ func HeartBeatWrite(conn net.Conn, done chan int) {
 }
 
 func HeartBeatRead(body []byte) error {
-	logger.Debug("heart beat, body:%s", string(body))
+	var msg string
+	err := codec.Decode(body, &msg)
+	if err != nil {
+		logger.Error("header decode failed! %s", err.Error())
+		return err
+	}
+	logger.Debug("heart beat, body:%s", string(msg))
 	return nil
 }

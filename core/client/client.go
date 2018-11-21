@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/ikingfisher/jellyfish/core/util"
+	"github.com/ikingfisher/jellyfish/core/codec"
 	"github.com/ikingfisher/jellyfish/core/lg"
 	"net"
 	"time"
@@ -33,15 +33,21 @@ func (this * Client) PushHeartBeat() error {
 		this.ID, ipStr, this.HeartbeatTime)
 
 	body := "hello"
-	buf := []byte("H")
-	bodySize := util.Int64ToBytes(int64(len(body)))
-	nanoTime := time.Now().UnixNano()
-	seq := util.Int64ToBytes(nanoTime)
-	this.logger.Debug("seq: %d", nanoTime)
-	buf = append(buf, bodySize...)
-	buf = append(buf, seq...)
-	buf = append(buf, body...)
-	_, err := this.Conn.Write(buf)
+	// buf := []byte("H")
+	// bodySize := util.Int64ToBytes(int64(len(body)))
+	seq := time.Now().UnixNano()
+	// seq := util.Int64ToBytes(nanoTime)
+	this.logger.Debug("seq: %d", seq)
+	// buf = append(buf, bodySize...)
+	// buf = append(buf, seq...)
+	// buf = append(buf, body...)
+	buf, err := codec.EncodeHeader(seq, body)
+	if err != nil {
+		this.logger.Error("response encode failed! %s", err.Error())
+		return err
+	}
+
+	_, err = this.Conn.Write(buf)
 	if err != nil {
 		this.logger.Error("push heart beat failed! ", err.Error())
 		return err

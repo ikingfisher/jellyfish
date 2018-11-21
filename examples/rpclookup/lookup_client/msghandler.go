@@ -9,7 +9,7 @@ import (
 )
 
 func HandleMessage(conn net.Conn, done chan int) error {
-	buf := make([]byte, 17)
+	buf := make([]byte, codec.HeaderSize())
 	n, err := io.ReadFull(conn, buf)
 	if err != nil || n != len(buf) {
 		logger.Error("conn receive header failed! %s", err.Error())
@@ -20,14 +20,20 @@ func HandleMessage(conn net.Conn, done chan int) error {
 		done <- 1
 		return err
 	}
-
-	protocolMagic := string(buf[:1])
+	var header codec.Header
+	err = codec.Decode(buf, &header)
+	if err != nil {
+		logger.Error("header decode failed! %s", err.Error())
+		done <- 1
+		return err
+	}
+	protocolMagic := string(header.T)
 	logger.Trace("protocolMagic:%s", protocolMagic)
-	bodySize := util.BytesToInt64(buf[1:9])
-	seq := util.BytesToInt64(buf[9:])
+	// bodySize := util.BytesToInt64(buf[1:9])
+	seq := header.Seq
 	logger.Debug("seq:%d, buf:%v", seq, buf)
 
-	body := make([]byte, bodySize)
+	body := make([]byte, header.Size)
 	n, err = io.ReadFull(conn, body)
 	if err != nil {
 		logger.Error("seq:%d, conn receive body failed! %s", seq, err.Error())
