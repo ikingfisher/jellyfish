@@ -1,27 +1,18 @@
 package main
 
 import (
-	"io"
+	// "io"
 	"net"
 	"time"
-	"github.com/ikingfisher/jellyfish/core/util"
+	"bufio"
+	// "github.com/ikingfisher/jellyfish/core/util"
 	"github.com/ikingfisher/jellyfish/core/codec"
 )
 
 func HandleMessage(conn net.Conn, done chan int) error {
 	buf := make([]byte, codec.HeaderSize())
-	n, err := io.ReadFull(conn, buf)
-	if err != nil || n != len(buf) {
-		logger.Error("conn receive header failed! %s", err.Error())
-		if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
-			done <- 1
-			return err
-		}
-		done <- 1
-		return err
-	}
 	var header codec.Header
-	err = codec.Decode(buf, &header)
+	err := codec.DecodeHeader(conn, &header)
 	if err != nil {
 		logger.Error("header decode failed! %s", err.Error())
 		done <- 1
@@ -29,27 +20,18 @@ func HandleMessage(conn net.Conn, done chan int) error {
 	}
 	protocolMagic := string(header.T)
 	logger.Trace("protocolMagic:%s", protocolMagic)
-	// bodySize := util.BytesToInt64(buf[1:9])
 	seq := header.Seq
 	logger.Debug("seq:%d, buf:%v", seq, buf)
 
-	body := make([]byte, header.Size)
-	n, err = io.ReadFull(conn, body)
-	if err != nil {
-		logger.Error("seq:%d, conn receive body failed! %s", seq, err.Error())
-		done <- 1
-		return err
-	}
-
 	switch protocolMagic {
 	case "H":
-		err = HeartBeatRead(body)
+		err = HeartBeatRead(conn)
 		if err != nil {
 			logger.Error("heart beat error. %s", err.Error())
 			return err
 		}
 	case "D":
-		err := HandleMsgRead(body)
+		err := HandleMsgRead(conn)
 		if err != nil {
 			logger.Error("mgs handler error. %s", err.Error())
 			return err
@@ -62,44 +44,28 @@ func HandleMessage(conn net.Conn, done chan int) error {
 }
 
 func HandleMsgWrite(conn net.Conn, done chan int) {
-	buf := []byte("D")
+	var header codec.Header
+	header.T = 'H'
+	header.Seq = time.Now().UnixNano()
+
+	codec.Encode(conn, header)
+
 	var req codec.Request
 	req.Cmd = "HandleMsg"
 	req.Body = append(req.Body, string("request from client")...)
-	body, err := codec.ReqEncode(req)
-	if err != nil {
-		logger.Error("request encode failed! %s", err.Error())
-		return
-	}
-
-	bodySize := util.Int64ToBytes(int64(len(body)))
-	nanoTime := time.Now().UnixNano()
-	seq := util.Int64ToBytes(nanoTime)
-	logger.Debug("seq: %d", nanoTime)
-
-	buf = append(buf, bodySize...)
-	buf = append(buf, seq...)
-	buf = append(buf, body...)
-
-	_, err = conn.Write(buf)
-	if err != nil {
-		if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
-			logger.Debug("write message timeout. %s", err.Error())
-			return
-		}
-		done <- 1
-		logger.Error("Error to send message. %s", err.Error())
-		return
-	}
+	codec.Encode(conn, req)
+	buf := bufio.NewWriter(conn)
+	buf.Flush()
 }
 
-func HandleMsgRead(body []byte) error {
-	rsp, err := codec.RspDecode(body)
+func HandleMsgRead(conn net.Conn) error {
+	var req codec.Request
+	err := codec.DecodeBody(conn, &req)
 	if err != nil {
-		logger.Error("decode failed! %s", err.Error())
+		logger.Error("decode body failed! %s", err.Error())
 		return err
 	}
 
-	logger.Debug("cmd:%s, body:%s", rsp.Cmd, string(rsp.Body))
+	logger.Debug("read body. cmd:%s, body:%s", req.Cmd, string(req.Body))
 	return nil
 }

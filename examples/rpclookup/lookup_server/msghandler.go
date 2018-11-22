@@ -3,6 +3,7 @@ package main
 import (
 	"net"
 	"time"
+	"bufio"
 	"github.com/ikingfisher/jellyfish/core/lg"
 	"github.com/ikingfisher/jellyfish/core/codec"
 	// "github.com/ikingfisher/jellyfish/core/util"
@@ -24,39 +25,29 @@ func (this MsgHandler) HandleMessage(conn net.Conn, reqBuf []byte) error {
 	}
 	this.logger.Debug("cmd:%s, body:%s", req.Cmd, string(req.Body))
 
-	var rsp codec.Response
-	rsp.Cmd = req.Cmd
-	rsp.Body = []byte(string("server: rsp from server."))
-	// body, err := codec.RspEncode(rsp)
-	// if err != nil {
-	// 	logger.Error("request encode failed! %s", err.Error())
-	// 	return err
-	// }
-	// bodySize := util.Int64ToBytes(int64(len(body)))
-
 	seq := time.Now().UnixNano()
-	// seq := util.Int64ToBytes(nanoTime)
 	logger.Debug("seq: %d", seq)
 
-	// buf := []byte("D")
-	// buf = append(buf, bodySize...)
-	// buf = append(buf, seq...)
-	// buf = append(buf, body...)
-	buf, err := codec.Encode(seq, rsp)
+	var header codec.Header
+	header.T = 'D'
+	header.Seq = time.Now().UnixNano()
+
+	codec.Encode(conn, header)
 	if err != nil {
 		logger.Error("respone encode failed! %s", err.Error())
 		return err
 	}
 
-	_, err = conn.Write(buf)
+	var rsp codec.Response
+	rsp.Cmd = req.Cmd
+	rsp.Body = []byte(string("server: rsp from server."))
+	err = codec.Encode(conn, rsp)
 	if err != nil {
-		if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
-			logger.Debug("write message timeout. %s", err.Error())
-			return err
-		}
-		logger.Error("Error to send message. %s", err.Error())
+		logger.Error("respone encode failed! %s", err.Error())
 		return err
 	}
 
+	buf := bufio.NewWriter(conn)
+	buf.Flush()
 	return nil
 }
