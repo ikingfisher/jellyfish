@@ -1,9 +1,9 @@
 package codec
 
 import (
-	"io"
-	"net"
-	"bufio"
+	// "io"
+	// "net"
+	// "bufio"
 	"bytes"
 	"encoding/gob"
 )
@@ -24,23 +24,23 @@ type Response struct {
 	Body []byte
 }
 
-func EncodeHeartBeat(conn net.Conn, seq int64, obj interface{}) error {
+func EncodeHeartBeat(enc *gob.Encoder, seq int64, obj interface{}) error {
 	var header Header
 	header.T = 'H'
 	header.Seq = seq
 
-	err := Encode(conn, header)
+	err := Encode(enc, header)
 	if err != nil {
 		return err
 	}
 
-	err = Encode(conn, obj)
+	err = Encode(enc, obj)
 	if err != nil {
 		return err
 	}
 
-	buf := bufio.NewWriter(conn)
-	buf.Flush()
+	// buf := bufio.NewWriter(conn)
+	// buf.Flush()
 	return nil
 }
 
@@ -68,8 +68,8 @@ func Decode(body []byte, obj interface{}) error {
 	return nil
 }
 
-func DecodeHeader(conn io.ReadWriteCloser, header interface{}) error {
-	dec := gob.NewDecoder(conn)
+func DecodeHeader(dec *gob.Decoder, header interface{}) error {
+	// dec := gob.NewDecoder(conn)
 	err := dec.Decode(header)
 	if err != nil {
 		return err
@@ -77,8 +77,8 @@ func DecodeHeader(conn io.ReadWriteCloser, header interface{}) error {
 	return nil
 }
 
-func DecodeBody(conn io.ReadWriteCloser,body interface{}) error {
-	dec := gob.NewDecoder(conn)
+func DecodeBody(dec *gob.Decoder,body interface{}) error {
+	// dec := gob.NewDecoder(conn)
 	err := dec.Decode(body)
 	if err != nil {
 		return err
@@ -86,9 +86,9 @@ func DecodeBody(conn io.ReadWriteCloser,body interface{}) error {
 	return nil
 }
 
-func Encode(conn io.ReadWriteCloser, obj interface{}) error {
-	buf := bufio.NewWriter(conn)
-	enc := gob.NewEncoder(buf)
+func Encode(enc *gob.Encoder, obj interface{}) error {
+	// buf := bufio.NewWriter(conn)
+	// enc := gob.NewEncoder(buf)
 	err := enc.Encode(obj)
     if err != nil {
 		return err

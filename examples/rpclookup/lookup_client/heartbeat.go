@@ -3,7 +3,8 @@ package main
 import (
 	"net"
 	"time"
-	// "bufio"
+	"bufio"
+	"encoding/gob"
 	"github.com/ikingfisher/jellyfish/core/codec"
 )
 
@@ -12,16 +13,20 @@ func HeartBeatWrite(conn net.Conn, done chan int) {
 	seq := time.Now().UnixNano()
 	logger.Debug("seq: %d", seq)
 
-	err := codec.EncodeHeartBeat(conn, seq, body)
+	buf := bufio.NewWriter(conn)
+	enc := gob.NewEncoder(buf)
+	err := codec.EncodeHeartBeat(enc, seq, body)
 	if err != nil {
 		logger.Error("heart beat encode failed! %s", err.Error())
+		done <- 1
 		return
 	}
+	buf.Flush()
 }
 
-func HeartBeatRead(conn net.Conn) error {
+func HeartBeatRead(dec *gob.Decoder) error {
 	var msg string
-	err := codec.DecodeBody(conn, &msg)
+	err := codec.DecodeBody(dec, &msg)
 	if err != nil {
 		logger.Error("body decode failed! %s", err.Error())
 		return err

@@ -101,7 +101,7 @@ func (this * Lookupd) IOLoop(client *client.Client) error {
 			this.CloseClient(client)
 			return nil
 		default:
-			this.logger.Trace("default. begin receive msg.")
+			this.logger.Debug("default. begin receive msg.")
 			//do nothing
 		}
 
@@ -144,7 +144,7 @@ func (this * Lookupd) IOLoop(client *client.Client) error {
 			err = this.HeartBeat(client, seq, body)
 		case "D":
 			//todo reveive data logic
-			err := this.handler.HandleMessage(client.Conn, body)
+			err := this.handler.HandleMessage(client, body)
 			if err != nil {
 				this.logger.Error("client[%d] handler error. %s", client.ID, err.Error())
 				continue

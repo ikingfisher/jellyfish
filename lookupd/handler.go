@@ -1,9 +1,10 @@
 package lookupd
 
 import (
-	"net"
+	// "net"
+	"github.com/ikingfisher/jellyfish/core/client"
 )
 
 type Handler interface {
-	HandleMessage(conn net.Conn, reqBuf []byte) error
+	HandleMessage(client *client.Client, reqBuf []byte) error
 }

@@ -1,20 +1,20 @@
 package main
 
 import (
-	"net"
+	// "net"
 	"time"
-	"bufio"
+	// "bufio"
 	"github.com/ikingfisher/jellyfish/core/lg"
 	"github.com/ikingfisher/jellyfish/core/codec"
-	// "github.com/ikingfisher/jellyfish/core/util"
+	"github.com/ikingfisher/jellyfish/core/client"
 )
 
 type MsgHandler struct {
 	logger *lg.Logger
 }
 
-func (this MsgHandler) HandleMessage(conn net.Conn, reqBuf []byte) error {
-	ipStr := conn.RemoteAddr().String()
+func (this MsgHandler) HandleMessage(client *client.Client, reqBuf []byte) error {
+	ipStr := client.Conn.RemoteAddr().String()
 	this.logger.Debug("MsgHandler receive from %s", ipStr)
 
 	var req codec.Request
@@ -32,7 +32,7 @@ func (this MsgHandler) HandleMessage(conn net.Conn, reqBuf []byte) error {
 	header.T = 'D'
 	header.Seq = time.Now().UnixNano()
 
-	codec.Encode(conn, header)
+	codec.Encode(client.Enc, header)
 	if err != nil {
 		logger.Error("respone encode failed! %s", err.Error())
 		return err
@@ -41,13 +41,13 @@ func (this MsgHandler) HandleMessage(conn net.Conn, reqBuf []byte) error {
 	var rsp codec.Response
 	rsp.Cmd = req.Cmd
 	rsp.Body = []byte(string("server: rsp from server."))
-	err = codec.Encode(conn, rsp)
+	err = codec.Encode(client.Enc, rsp)
 	if err != nil {
 		logger.Error("respone encode failed! %s", err.Error())
 		return err
 	}
 
-	buf := bufio.NewWriter(conn)
-	buf.Flush()
+	// buf := bufio.NewWriter(conn)
+	client.EncBuf.Flush()
 	return nil
 }

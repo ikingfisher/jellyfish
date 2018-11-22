@@ -5,6 +5,7 @@ import (
 	"net"
 	"time"
 	"bufio"
+	"encoding/gob"
 	// "github.com/ikingfisher/jellyfish/core/util"
 	"github.com/ikingfisher/jellyfish/core/codec"
 )
@@ -12,7 +13,8 @@ import (
 func HandleMessage(conn net.Conn, done chan int) error {
 	buf := make([]byte, codec.HeaderSize())
 	var header codec.Header
-	err := codec.DecodeHeader(conn, &header)
+	dec := gob.NewDecoder(conn)
+	err := codec.DecodeHeader(dec, &header)
 	if err != nil {
 		logger.Error("header decode failed! %s", err.Error())
 		done <- 1
@@ -25,13 +27,13 @@ func HandleMessage(conn net.Conn, done chan int) error {
 
 	switch protocolMagic {
 	case "H":
-		err = HeartBeatRead(conn)
+		err = HeartBeatRead(dec)
 		if err != nil {
 			logger.Error("heart beat error. %s", err.Error())
 			return err
 		}
 	case "D":
-		err := HandleMsgRead(conn)
+		err := HandleMsgRead(dec)
 		if err != nil {
 			logger.Error("mgs handler error. %s", err.Error())
 			return err
@@ -47,20 +49,20 @@ func HandleMsgWrite(conn net.Conn, done chan int) {
 	var header codec.Header
 	header.T = 'H'
 	header.Seq = time.Now().UnixNano()
-
-	codec.Encode(conn, header)
+	buf := bufio.NewWriter(conn)
+	enc := gob.NewEncoder(buf)
+	codec.Encode(enc, header)
 
 	var req codec.Request
 	req.Cmd = "HandleMsg"
 	req.Body = append(req.Body, string("request from client")...)
-	codec.Encode(conn, req)
-	buf := bufio.NewWriter(conn)
+	codec.Encode(enc, req)
 	buf.Flush()
 }
 
-func HandleMsgRead(conn net.Conn) error {
+func HandleMsgRead(dec *gob.Decoder) error {
 	var req codec.Request
-	err := codec.DecodeBody(conn, &req)
+	err := codec.DecodeBody(dec, &req)
 	if err != nil {
 		logger.Error("decode body failed! %s", err.Error())
 		return err
