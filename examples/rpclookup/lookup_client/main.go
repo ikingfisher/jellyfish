@@ -51,7 +51,7 @@ func HeartBeat() error{
 		ticker := time.NewTicker(3 * time.Second)
 		defer ticker.Stop()
 
-		msgticker := time.NewTicker(1 * time.Second)
+		msgticker := time.NewTicker(60 * time.Second)
 		defer msgticker.Stop()
 		for {
 			select {
