@@ -104,6 +104,8 @@ func (this * Lookupd) IOLoop(client *client.Client) error {
 			this.logger.Trace("default. begin receive msg.")
 			//do nothing
 		}
+
+		this.logger.Info("header size = %d", codec.HeaderSize())
 	
 		buf := make([]byte, codec.HeaderSize())
 		n, err := io.ReadFull(client.Conn, buf)
@@ -116,6 +118,7 @@ func (this * Lookupd) IOLoop(client *client.Client) error {
 			client.ExitChan <- 1	//occur error! disconnect client.
 			continue
 		}
+		this.logger.Debug("buf:%v", buf)
 
 		var header codec.Header
 		err = codec.Decode(buf, &header)

@@ -49,7 +49,7 @@ func Encode(seq int64, obj interface{}) ([]byte, error) {
 	return buff.Bytes(), nil
 }
 
-func EncodeHeader(seq int64, obj interface{}) ([]byte, error) {
+func EncodeHeartBeat(seq int64, obj interface{}) ([]byte, error) {
 	var buff bytes.Buffer
 
 	var obj_buff bytes.Buffer
@@ -61,7 +61,7 @@ func EncodeHeader(seq int64, obj interface{}) ([]byte, error) {
 
 	var header_buff bytes.Buffer
 	var header Header
-	header.T = 'D'
+	header.T = 'H'
 	header.Seq = seq
 	header.Size = int32(len(obj_buff.Bytes()))
 	header_enc := gob.NewEncoder(&header_buff)
@@ -80,6 +80,9 @@ func EncodeHeader(seq int64, obj interface{}) ([]byte, error) {
 func HeaderSize() int {
 	var buff bytes.Buffer
 	var header Header
+	header.T = 'H'
+	header.Seq = int64(1542852055751046236)
+	header.Size = 12348
 	enc := gob.NewEncoder(&buff)
 	err := enc.Encode(header)
     if err != nil {

@@ -41,9 +41,9 @@ func (this * Client) PushHeartBeat() error {
 	// buf = append(buf, bodySize...)
 	// buf = append(buf, seq...)
 	// buf = append(buf, body...)
-	buf, err := codec.EncodeHeader(seq, body)
+	buf, err := codec.EncodeHeartBeat(seq, body)
 	if err != nil {
-		this.logger.Error("response encode failed! %s", err.Error())
+		this.logger.Error("heart beat encode failed! %s", err.Error())
 		return err
 	}
 

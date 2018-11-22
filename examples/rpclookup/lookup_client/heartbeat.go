@@ -17,11 +17,13 @@ func HeartBeatWrite(conn net.Conn, done chan int) {
 	// buf = append(buf, bodySize...)
 	// buf = append(buf, seq...)
 	// buf = append(buf, body...)
-	buf, err := codec.EncodeHeader(seq, body)
+	buf, err := codec.EncodeHeartBeat(seq, body)
 	if err != nil {
-		logger.Error("header encode failed! %s", err.Error())
+		logger.Error("heart beat encode failed! %s", err.Error())
 		return
 	}
+
+	logger.Info("%v", buf)
 
 	_, err = conn.Write(buf)
 	if err != nil {
