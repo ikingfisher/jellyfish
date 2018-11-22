@@ -106,7 +106,6 @@ func (this * Lookupd) IOLoop(client *client.Client) error {
 		}
 
 		this.logger.Info("header size = %d", codec.HeaderSize())
-	
 		buf := make([]byte, codec.HeaderSize())
 		n, err := io.ReadFull(client.Conn, buf)
 		if err != nil || n != len(buf) {
@@ -128,10 +127,9 @@ func (this * Lookupd) IOLoop(client *client.Client) error {
 		}
 		protocolMagic := string(header.T)
 		this.logger.Trace("protocolMagic:%s", protocolMagic)
-		// bodySize := util.BytesToInt64(buf[1:9])
-		// seq := util.BytesToInt64(buf[9:])
 		seq := header.Seq
-		this.logger.Debug("seq:%d, buf:%v", seq, buf)
+		this.logger.Info("seq:%d, body.size:%d", seq, header.Size)
+		this.logger.Info("buf:%v", buf)
 
 		body := make([]byte, header.Size)
 		n, err = io.ReadFull(client.Conn, body)
@@ -161,7 +159,7 @@ func (this * Lookupd) IOLoop(client *client.Client) error {
 
 func (this *Lookupd) HeartBeat(client *client.Client, seq int64, body []byte) error {
 	ipStr := client.Conn.RemoteAddr().String()
-	this.logger.Debug("%d, %s say: %s", seq, ipStr, string(body))
+	this.logger.Debug("%s seq:%d, say: %s", ipStr, seq, string(body))
 
 	err := client.PushHeartBeat()
 	if err != nil {

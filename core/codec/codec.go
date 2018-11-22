@@ -1,6 +1,9 @@
 package codec
 
 import (
+	"io"
+	"net"
+	"bufio"
 	"bytes"
 	"encoding/gob"
 )
@@ -21,60 +24,24 @@ type Response struct {
 	Body []byte
 }
 
-func Encode(seq int64, obj interface{}) ([]byte, error) {
-	var buff bytes.Buffer
-
-	var obj_buff bytes.Buffer
-	enc := gob.NewEncoder(&obj_buff)
-	err := enc.Encode(obj)
-	if err != nil {
-		return nil, err
-	}
-
-	var header_buff bytes.Buffer
-	var header Header
-	header.T = 'D'
-	header.Seq = seq
-	header.Size = int32(len(obj_buff.Bytes()))
-	header_enc := gob.NewEncoder(&header_buff)
-	err = header_enc.Encode(header)
-	if err != nil {
-		return nil, err
-	}
-
-	buff.Write(header_buff.Bytes())
-	buff.Write(obj_buff.Bytes())
-	// buff.Write([]byte("E"))
-
-	return buff.Bytes(), nil
-}
-
-func EncodeHeartBeat(seq int64, obj interface{}) ([]byte, error) {
-	var buff bytes.Buffer
-
-	var obj_buff bytes.Buffer
-	enc := gob.NewEncoder(&obj_buff)
-	err := enc.Encode(obj)
-	if err != nil {
-		return nil, err
-	}
-
-	var header_buff bytes.Buffer
+func EncodeHeartBeat(conn net.Conn, seq int64, obj interface{}) error {
 	var header Header
 	header.T = 'H'
 	header.Seq = seq
-	header.Size = int32(len(obj_buff.Bytes()))
-	header_enc := gob.NewEncoder(&header_buff)
-	err = header_enc.Encode(header)
+
+	err := Encode(conn, header)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	buff.Write(header_buff.Bytes())
-	buff.Write(obj_buff.Bytes())
-	// buff.Write([]byte("E"))
+	err = Encode(conn, obj)
+	if err != nil {
+		return err
+	}
 
-	return buff.Bytes(), nil
+	buf := bufio.NewWriter(conn)
+	buf.Flush()
+	return nil
 }
 
 func HeaderSize() int {
@@ -82,7 +49,7 @@ func HeaderSize() int {
 	var header Header
 	header.T = 'H'
 	header.Seq = int64(1542852055751046236)
-	header.Size = 12348
+	header.Size = 9
 	enc := gob.NewEncoder(&buff)
 	err := enc.Encode(header)
     if err != nil {
@@ -101,48 +68,30 @@ func Decode(body []byte, obj interface{}) error {
 	return nil
 }
 
-func ReqEncode(req Request) ([]byte, error) {
-	var buff bytes.Buffer
-	enc := gob.NewEncoder(&buff)
-	err := enc.Encode(req)
-    if err != nil {
-		// this.logger.Error("encode error: %s", err.Error())
-		return nil, err
+func DecodeHeader(conn io.ReadWriteCloser, header interface{}) error {
+	dec := gob.NewDecoder(conn)
+	err := dec.Decode(header)
+	if err != nil {
+		return err
 	}
-	return buff.Bytes(), nil
+	return nil
 }
 
-func ReqDecode(body []byte) (*Request, error) {
-	buff := bytes.NewBuffer(body)
-	dec := gob.NewDecoder(buff)
-	var req Request
-    err := dec.Decode(&req)
-    if err != nil {
-		// this.logger.Error("decode error: %s", err.Error())
-		return nil, err
+func DecodeBody(conn io.ReadWriteCloser,body interface{}) error {
+	dec := gob.NewDecoder(conn)
+	err := dec.Decode(body)
+	if err != nil {
+		return err
 	}
-	return &req, nil
+	return nil
 }
 
-func RspEncode(rsp Response) ([]byte, error) {
-	var buff bytes.Buffer
-	enc := gob.NewEncoder(&buff)
-	err := enc.Encode(rsp)
+func Encode(conn io.ReadWriteCloser, obj interface{}) error {
+	buf := bufio.NewWriter(conn)
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(obj)
     if err != nil {
-		// this.logger.Error("encode error: %s", err.Error())
-		return nil, err
+		return err
 	}
-	return buff.Bytes(), nil
-}
-
-func RspDecode(body []byte) (*Response, error) {
-	buff := bytes.NewBuffer(body)
-	dec := gob.NewDecoder(buff)
-	var rsp Response
-    err := dec.Decode(&rsp)
-    if err != nil {
-		// this.logger.Error("decode error: %s", err.Error())
-		return nil, err
-	}
-	return &rsp, nil
+	return nil
 }

@@ -1,12 +1,14 @@
 package codec
 
 import (
+	"bytes"
 	"testing"
+	"encoding/gob"
 )
 
 func Test_EncodeHeartBeat(t *testing.T) {
 	msg := "hello"
-	seq := int64(123)
+	seq := int64(1542862774224076350)
 	buf, err := EncodeHeartBeat(seq, msg)
 	if err != nil {
 		t.Errorf("encode heart beat failed! %s", err.Error())
@@ -22,7 +24,15 @@ func Test_EncodeHeartBeat(t *testing.T) {
 		t.Errorf("decode header failed! %s", err.Error())
 	}
 
-	t.Logf("seq : %d", header.Seq)
+	t.Logf("header seq : %d, size : %d", header.Seq, header.Size)
+
+	var obj_buff bytes.Buffer
+	enc := gob.NewEncoder(&obj_buff)
+	err = enc.Encode(msg)
+	if err != nil {
+		t.Errorf("encode body failed! %s", err.Error())
+	}
+	t.Logf("obj_buff: %v", obj_buff.Bytes())
 }
 
 func Test_Encode(t *testing.T) {
